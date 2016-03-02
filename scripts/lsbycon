@@ -1,0 +1,71 @@
+#!/bin/bash
+##################################################################################
+# lsbycon - list all files in a directory tree that contain a search string
+#         - if any 3rd param not = 'N' is present, display file lines containing
+#	  - string on lines following the file name
+#
+# lsbycon  <search-string>  <directory-tree-root> <Y/N optional>
+#
+# Who	Date	What
+# RLP   160215	Created
+##################################################################################
+
+# validate # of parameters
+
+if [ $# -lt 2 -o $# -gt 3 ]
+then
+  echo "Format is"
+  echo "lsbycon  <search-string>  <directory-tree-root> <Y/N optional>" 
+  exit
+fi
+
+#echo "Searching for $1 in tree $2"
+
+# validate root dir of search
+
+if [ ! -d "$2" ]
+then
+  echo "Directory-tree-root not found: $2"
+  echo "Format is"
+  echo "lsbycon  <search-string>  <dir-tree-root> <Y/N display lines-optional>" 
+  exit
+fi
+
+sstr="$1"
+rootdir="$2"
+
+# See if desired to list the matching lines in each file
+
+if [ $# -eq 3 -a "$3" != "N" ]
+then 
+  listlines="Y"
+else
+  listlines="N"
+fi
+
+for fil in `ls $2`
+do
+  # if a directory, recursively call to search that branch as well
+  if [ -d "$rootdir/$fil" ]
+  then
+    "$0" "$sstr" "$rootdir"/"$fil" "$listlines"
+  else
+
+    # if search string in this file, list file name, and optionally, matching lines
+
+    matchlines=`grep "$sstr" $rootdir/$fil` 
+    matchlinecount=`grep "$sstr" $rootdir/$fil | wc -l` 
+    
+    if [ "$matchlines" != "" ] 
+    then
+      if [ "$listlines" = "Y" ] # file name, line count, and matching lines
+      then
+        echo "$rootdir/$fil $matchlinecount line(s) match:"
+        echo "$matchlines"
+      else			# file name only 
+        echo "$rootdir/$fil"
+      fi
+    fi
+  fi
+done
+
